@@ -19,7 +19,7 @@ void		save_to_buf_minus(t_arg *arg, char *str, int len, int f)
 	if (arg->preci == -1)
 	{
 		len ? printf_concat(arg, str, -1) : len;
-		(arg->flags[1] || arg->flags[4]) && *str != '-' ?
+		(arg->flags[1] || arg->flags[3]) && !f ?
 				add_char(arg, ' ', arg->width - len - 1) :
 						add_char(arg, ' ', arg->width - len);
 	}
@@ -30,7 +30,7 @@ void		save_to_buf_minus(t_arg *arg, char *str, int len, int f)
 			*arg->buf++ = *str++;
 		add_char(arg, '0', arg->preci - len);
 		len ? printf_concat(arg, str, -1) : len;
-		f || arg->flags[1] || arg->flags[4] ?
+		f || arg->flags[1] || arg->flags[3] ?
 				add_char(arg, ' ', arg->width - arg->preci - 1) :
 						add_char(arg, ' ', arg->width - arg->preci);
 	}
@@ -51,7 +51,7 @@ void		save_to_buf_no_minus(t_arg *arg, char *str, int len, int f)
 {
 	if (arg->preci > 0)
 	{
-		f || (arg->flags[1] || arg->flags[3]) ?
+		f || arg->flags[1] || arg->flags[3] ?
 			add_char(arg, ' ', arg->width - arg->preci - 1) :
 				add_char(arg, ' ', arg->width - arg->preci);
 		len -= f ? 1 : 0;
@@ -100,7 +100,6 @@ char		*get_in_string(t_arg *arg, va_list va, char **ptr)
 void		set_d(t_arg *arg, va_list va, char **ptr)
 {
 	char	*needed;
-	int		len;
 	int		f;
 
 	if (*arg->format == 'D')
@@ -110,18 +109,19 @@ void		set_d(t_arg *arg, va_list va, char **ptr)
 	}
 	arg->type = *arg->format++;
 	needed = get_in_string(arg, va, ptr);
-	len = ft_strlen(needed);
+	arg->l = ft_strlen(needed);
+	add_mem(arg);
 	if ((arg->flags[0] && arg->flags[2]) || (arg->flags[2] && arg->preci >= 0))
 		arg->flags[2] = 0;
 	f = *needed == '-' ? 1 : 0;
-	if (arg->preci > 0 && ((!f && arg->preci < len) ||
-			(f && arg->preci < len - 1)))
+	if (arg->preci > 0 && ((!f && arg->preci < arg->l) ||
+			(f && arg->preci < arg->l - 1)))
 		arg->preci = -1;
 	if (arg->preci == 0 && *needed == '0')
 	{
 		no_preci(arg);
 		return ;
 	}
-	arg->flags[0] ? save_to_buf_minus(arg, needed, len, f) :
-					save_to_buf_no_minus(arg, needed, len, f);
+	arg->flags[0] ? save_to_buf_minus(arg, needed, arg->l, f) :
+					save_to_buf_no_minus(arg, needed, arg->l, f);
 }

@@ -17,6 +17,8 @@ static int	count_len(intmax_t num, int base)
 	int	count;
 
 	count = 0;
+	if (num == 0)
+		return (1);
 	while (num)
 	{
 		count++;

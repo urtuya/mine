@@ -3,7 +3,8 @@ NAME = libftprintf.a
 CC = gcc
 FLAGS = -Wall -Wextra -Werror
 SRC = adding_to_buf.c ft_printf.c intmax_toa.c print_d.c print_unsign.c set_all_fields.c \
-		set_len_type.c uintmax_toa.c print_o_x_b.c print_char.c print_p.c print_f.c helping.c 
+		set_len_type.c uintmax_toa.c print_o_x_b.c print_char.c print_p.c print_f.c helping.c \
+		color.c unsigned_addchar.c
 INC = ft_printf.h
 OFILE = $(SRC:.c=.o)
 all: $(NAME)

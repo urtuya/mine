@@ -60,37 +60,37 @@ void	p_minus(t_arg *arg, char *str, int len)
 void	set_ptr(t_arg *arg, va_list va, char **ptr)
 {
 	char	*needed;
-	int		len;
 	int		f;
 
 	arg->type = *arg->format++;
 	arg->length[0] = 'l';
 	needed = get_in_ustring(arg, va, ptr);
-	len = ft_strlen(needed);
-	arg->width = arg->width <= len ? 0 : arg->width;
+	arg->l = ft_strlen(needed);
+	add_mem(arg);
+	arg->width = arg->width <= arg->l ? 0 : arg->width;
 	if (*needed != '0')
-		arg->preci = arg->preci <= len ? -1 : arg->preci;
+		arg->preci = arg->preci <= arg->l ? -1 : arg->preci;
 	f = (*needed == '0') ? 1 : 0;
 	if (!arg->flags[0])
-		p_no_minus(arg, needed, len);
+		p_no_minus(arg, needed, arg->l);
 	else
-		p_minus(arg, needed, len);
+		p_minus(arg, needed, arg->l);
 }
 
 void	invalid_type(t_arg *arg)
 {
-	int len;
-
-	len = ft_strlen(arg->format);
+	arg->l = ft_strlen(arg->format);
+	add_mem(arg);
 	if (arg->flags[0])
 	{
 		while (*arg->format)
 			*arg->buf++ = *arg->format++;
-		add_char(arg, ' ', arg->width - len);
+		add_char(arg, ' ', arg->width - arg->l);
 	}
 	else
 	{
-		add_char(arg, ' ', arg->width - len);
+		arg->flags[2] ? add_char(arg, '0', arg->width - arg->l) :
+				add_char(arg, ' ', arg->width - arg->l);
 		while (*arg->format)
 			*arg->buf++ = *arg->format++;
 	}

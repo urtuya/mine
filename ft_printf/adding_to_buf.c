@@ -15,15 +15,11 @@
 void	printf_concat(t_arg *arg, const char *str, int len)
 {
 	if (len == -1)
-	{
 		while (*str)
 			*arg->buf++ = *str++;
-	}
 	else
-	{
 		while (len--)
 			*arg->buf++ = *str++;
-	}
 }
 
 void	add_char(t_arg *arg, char c, int n)
@@ -32,20 +28,33 @@ void	add_char(t_arg *arg, char c, int n)
 		*arg->buf++ = c;
 }
 
+void	flag_minus(t_arg *arg)
+{
+	if (arg->flags[1] || arg->flags[3])
+		*arg->buf++ = arg->flags[1] ? '+' : ' ';
+	arg->flags[1] || arg->flags[3] ? add_char(arg, ' ', arg->width - 1)
+				: add_char(arg, ' ', arg->width);
+}
+
 void	no_preci(t_arg *arg)
 {
-	if (arg->width)
+	if (!arg->flags[0])
 	{
-		arg->flags[1] || arg->flags[3] ? add_char(arg, ' ', arg->width - 1)
-				: add_char(arg, ' ', arg->width);
-		if (arg->flags[1] || arg->flags[3])
-			*arg->buf++ = arg->flags[1] ? '+' : ' ';
+		if (arg->width)
+		{
+			arg->flags[1] || arg->flags[3] ? add_char(arg, ' ', arg->width - 1)
+					: add_char(arg, ' ', arg->width);
+			if (arg->flags[1] || arg->flags[3])
+				*arg->buf++ = arg->flags[1] ? '+' : ' ';
+		}
+		else
+		{
+			if (arg->flags[1] || arg->flags[3])
+				*arg->buf++ = arg->flags[1] ? '+' : ' ';
+		}
 	}
 	else
-	{
-		if (arg->flags[1] || arg->flags[3])
-			*arg->buf++ = arg->flags[1] ? '+' : ' ';
-	}
+		flag_minus(arg);
 }
 
 void	set_uppercase(char **str)

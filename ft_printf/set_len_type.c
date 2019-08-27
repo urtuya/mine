@@ -46,8 +46,57 @@ void	set_type(t_arg *arg, va_list va, char **ptr)
 		set_string(arg, va);
 	else if (*arg->format == 'p')
 		set_ptr(arg, va, ptr);
-	else if (*arg->format == 'f' || *arg->format == 'F')
+	else if (*arg->format == 'f')
 		set_f(arg, va, ptr);
 	else if (*arg->format != '\0')
 		invalid_type(arg);
+}
+
+void	add_mem(t_arg *arg)
+{
+	int		max_len;
+	char	*tmp;
+
+	max_len = 1;
+	max_len = arg->width > max_len ? arg->width : max_len;
+	max_len = arg->preci > max_len ? arg->preci : max_len;
+	max_len = arg->l > max_len ? arg->l : max_len;
+	if (!arg->head)
+	{
+		arg->head = ft_strnew(max_len + 16);
+		arg->buf = arg->head;
+	}
+	else
+	{
+		tmp = ft_strndup(arg->head, arg->buf_len
+							+ arg->full_len + arg->char_len);
+		free(arg->head);
+		arg->head = ft_strnew(max_len + arg->full_len + arg->full_len
+						+ arg->buf_len + arg->char_len + 16);
+		ft_strncpy(arg->head, tmp, arg->full_len +
+						arg->buf_len + arg->char_len);
+		arg->buf = arg->head + arg->full_len + arg->buf_len + arg->char_len;
+		free(tmp);
+	}
+	arg->ptr_buf_save = arg->buf;
+}
+
+void	add_mem_empty(t_arg *arg)
+{
+	if (!arg->head)
+	{
+		arg->head = ft_strnew(0);
+		arg->buf = arg->head;
+	}
+	arg->ptr_buf_save = arg->buf;
+}
+
+int		until_perc(char *format)
+{
+	int i;
+
+	i = 0;
+	while (format[i] && format[i] != '%')
+		i++;
+	return (i);
 }

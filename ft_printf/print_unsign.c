@@ -12,56 +12,68 @@
 
 #include "ft_printf.h"
 
-void		add_some_chars(t_arg *arg, int len)
+void		u_preci(t_arg *arg, char *str, int len, int flag)
 {
-	if (arg->type == 'X' || arg->type == 'x' || arg->type == 'o' ||
-			arg->type == 'O' || arg->type == 'b' || arg->type == 'B')
-		arg->type == 'o' || arg->type == 'O' ? add_char(arg, ' ',
-					arg->width - len - 1) : add_char(arg, ' ',
-							arg->width - len - 2);
+	if (flag == 10)
+	{
+		add_char(arg, '0', arg->preci - len);
+		printf_concat(arg, str, -1);
+		arg->flags[1] || arg->flags[3] ? add_char(arg, ' ', arg->width -
+			arg->preci - 1) : add_char(arg, ' ', arg->width - arg->preci);
+	}
+	else if (flag == 11)
+	{
+		arg->flags[1] || arg->flags[3] ?
+			add_char(arg, ' ', arg->width - arg->preci - 1) :
+				add_char(arg, ' ', arg->width - arg->preci);
+		if ((arg->flags[3] || arg->flags[1]))
+			arg->flags[3] ? add_char(arg, ' ', 1) : add_char(arg, '+', 1);
+		add_char(arg, '0', arg->preci - len);
+	}
 }
 
 void		usave_to_buf_minus(t_arg *arg, char *str, int len)
 {
+	if (arg->flags[3] || arg->flags[1])
+		arg->flags[3] ? add_char(arg, ' ', 1) : add_char(arg, '+', 1);
 	if (arg->preci == -1)
 	{
-		if (arg->flags[4])
-			depend_on_type(arg);
-		printf_concat(arg, str, -1);
+		printf_concat(arg, str, len);
 		if (arg->flags[2])
-			add_char(arg, '0', arg->width - len);
+			add_char(arg, '0', arg->width - (len += arg->flags[1]
+						|| arg->flags[3] ? 1 : 0));
 		else if (!arg->flags[2] && arg->flags[4])
-			add_some_chars(arg, len);
+			add_some_chars(arg, str, len);
 		else
-			add_char(arg, ' ', arg->width - len);
+			add_char(arg, ' ', arg->width - (len += arg->flags[3]
+						|| arg->flags[1] ? 1 : 0));
 	}
 	else
-	{
-		add_char(arg, '0', arg->preci - len);
-		printf_concat(arg, str, -1);
-		add_char(arg, ' ', arg->width - arg->preci);
-	}
+		u_preci(arg, str, len, 10);
 }
 
 void		usave_to_buf_no_minus(t_arg *arg, char *str, int len)
 {
 	if (arg->preci <= 0)
 	{
+		if ((arg->flags[3] || arg->flags[1]) && arg->flags[2])
+			arg->flags[3] ? add_char(arg, ' ', 1) : add_char(arg, '+', 1);
 		if (arg->flags[2])
-			add_char(arg, '0', arg->width - len);
-		else if (!arg->flags[2] && arg->flags[4] && *str != '0')
+			add_char(arg, '0', arg->width - (len += arg->flags[3]
+					|| arg->flags[1] ? 1 : 0));
+		else if (!arg->flags[2] && arg->flags[4])
 		{
 			add_char(arg, ' ', arg->width - len - 1);
 			printf_concat(arg, "0", 1);
 		}
 		else
-			add_char(arg, ' ', arg->width - len);
+			add_char(arg, ' ', arg->width - (len += arg->flags[3]
+					|| arg->flags[1] ? 1 : 0));
+		if ((arg->flags[3] || arg->flags[1]) && !arg->flags[2])
+			arg->flags[3] ? add_char(arg, ' ', 1) : add_char(arg, '+', 1);
 	}
 	else
-	{
-		add_char(arg, ' ', arg->width - arg->preci);
-		add_char(arg, '0', arg->preci - len);
-	}
+		u_preci(arg, str, len, 11);
 	printf_concat(arg, str, -1);
 }
 
@@ -71,17 +83,17 @@ char		*get_in_ustring(t_arg *arg, va_list va, char **ptr)
 	char		*str;
 
 	val = va_arg(va, uintmax_t);
-	if (arg->length[0] == 'h')
+	if (arg->length[0] == 'h' && arg->type != 'O')
 		val = arg->length[1] && arg->length[1] == 'h' ?
 				(unsigned char)val : (short unsigned int)val;
-	else if (arg->length[0] == 'l')
+	if (arg->length[0] == 'l' && arg->type != 'O')
 		val = arg->length[1] && arg->length[1] == 'l' ?
 				(unsigned long int)val : (long unsigned int)val;
-	else if (arg->length[0] == 'j' || arg->length[0] == 'z')
+	else if ((arg->length[0] == 'j' || arg->length[0] == 'z'))
 		val = arg->length[0] == 'j' ? val : (size_t)val;
-	else if (arg->length[0] == 't')
+	else if (arg->length[0] == 't' && arg->type != 'O')
 		val = (ptrdiff_t)val;
-	else
+	else if (arg->type != 'O')
 		val = (unsigned int)val;
 	if (arg->type == 'u' || arg->type == 'U' ||
 					arg->type == 'd' || arg->type == 'D')
@@ -97,7 +109,6 @@ char		*get_in_ustring(t_arg *arg, va_list va, char **ptr)
 void		set_unsigned(t_arg *arg, va_list va, char **ptr)
 {
 	char	*needed;
-	int		len;
 
 	arg->type = *arg->format++;
 	if (*(arg->format - 1) == 'U')
@@ -105,16 +116,19 @@ void		set_unsigned(t_arg *arg, va_list va, char **ptr)
 		arg->length[0] = 'l';
 		arg->length[1] = '\0';
 	}
-	needed = get_in_ustring(arg, va, ptr);
-	len = ft_strlen(needed);
-	if (arg->preci > 0 && arg->preci < len)
-		arg->preci = -1;
-	arg->flags[2] = arg->preci >= 0 ? 0 : arg->flags[2];
-	if (arg->preci == 0 && *needed == '0')
+	if (arg->type == 'u' || arg->type == 'U')
 	{
-		no_preci(arg);
-		return ;
+		arg->flags[1] = 0;
+		arg->flags[3] = 0;
 	}
-	arg->flags[0] ? usave_to_buf_minus(arg, needed, len) :
-				usave_to_buf_no_minus(arg, needed, len);
+	needed = get_in_ustring(arg, va, ptr);
+	arg->l = ft_strlen(needed);
+	add_mem(arg);
+	arg->flags[2] = arg->flags[2] && arg->flags[0] ? 0 : arg->flags[2];
+	arg->flags[2] = arg->preci >= 0 && arg->flags[2] ? 0 : arg->flags[2];
+	arg->preci = arg->preci > 0 && arg->preci < arg->l ? -1 : arg->preci;
+	if (arg->preci == 0 && *needed == '0')
+		return (no_preci(arg));
+	arg->flags[0] ? usave_to_buf_minus(arg, needed, arg->l) :
+				usave_to_buf_no_minus(arg, needed, arg->l);
 }

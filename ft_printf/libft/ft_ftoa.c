@@ -6,7 +6,7 @@
 /*   By: vellery- <marvin@42.fr>                    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2019/06/28 17:35:41 by vellery-          #+#    #+#             */
-/*   Updated: 2019/07/12 19:34:45 by vellery-         ###   ########.fr       */
+/*   Updated: 2019/08/20 18:11:58 by vellery-         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,17 +59,16 @@ static void		set_decim(long double val, int *i, int preci, char *str)
 	}
 }
 
-char			*ft_ftoa(long double val, int preci)
+char			*ft_ftoa(long double val, int preci, int sign)
 {
 	unsigned long int	num;
 	char				*str;
 	int					i;
-	int					sign;
 
 	preci = preci < 0 ? 6 : preci;
-	sign = val < 0 || val == -0.0 ? 1 : 0;
+	sign = val < 0 ? 1 : sign;
 	val = sign ? -val : val;
-	val += (preci >= 0) ? 5.000001 / ft_pow(10, preci + 1) : 0;
+	val += (preci >= 0) ? 5.000000001 / ft_pow(10, preci + 1) : 0;
 	num = val;
 	i = len(num) + sign;
 	if (!(str = ft_strnew((i + preci + (preci > 0 ? 1 : 0) + 1))))

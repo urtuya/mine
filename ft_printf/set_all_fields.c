@@ -80,7 +80,6 @@ void	set_all_fields(va_list va, t_arg *arg)
 	arg->format++;
 	if (*arg->format == '\0')
 		return ;
-	arg->ptr_buf_save = arg->buf;
 	refresh(arg);
 	set_fl_width_prec(arg, va);
 	set_length(arg);

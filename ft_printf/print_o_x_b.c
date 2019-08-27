@@ -12,20 +12,28 @@
 
 #include "ft_printf.h"
 
+void	setting_spaces(t_arg *arg, char *str, int len)
+{
+	if (!(arg->type == 'o' || arg->type == 'O'))
+		add_char(arg, ' ', arg->width - arg->preci -
+				(arg->flags[4] && *str != '0' ? 2 : 0));
+	else
+		add_char(arg, ' ', arg->width - arg->preci - (arg->flags[4] &&
+			(arg->preci == 0 || (arg->preci == len
+				&& *str != '0')) ? 1 : 0));
+}
+
 void	bin_no_preci(t_arg *arg, char *str, int len, int *flag)
 {
-	if (!arg->flags[2] && arg->flags[4] && *str != '0')
+	if (!arg->flags[2] && arg->flags[4])
 	{
-		if (capit(arg->type) || lower(arg->type))
-			arg->type == 'x' || arg->type == 'X' || arg->type == 'b'
-				|| arg->type == 'B' ? add_char(arg, ' ', arg->width - len - 2) :
-					add_char(arg, ' ', arg->width - len - 1);
-		depend_on_type(arg);
+		add_some_chars(arg, str, len);
+		depend_on_type(arg, str);
 		*flag = 1;
 	}
 	else if (arg->flags[2] && arg->flags[4] && *str != '0')
 	{
-		depend_on_type(arg);
+		depend_on_type(arg, str);
 		if (arg->type == 'X' || arg->type == 'x' ||
 					arg->type == 'b' || arg->type == 'B')
 			add_char(arg, '0', arg->width - len - 2);
@@ -50,20 +58,44 @@ void	save_to_buf_no_minus_bin(t_arg *arg, char *str, int len)
 	}
 	else
 	{
-		if (arg->flags[4] && (*str != '0'))
-			depend_on_type(arg);
-		add_char(arg, ' ', arg->width - arg->preci);
-		(arg->type == 'o' || arg->type == 'O') && arg->flags[4] && *str != '0' ?
-				add_char(arg, '0', arg->preci - len - 1) :
-						add_char(arg, '0', arg->preci - len);
+		setting_spaces(arg, str, len);
+		arg->flags[4] ? depend_on_type(arg, str) : arg->flags[4];
+		add_char(arg, '0', arg->preci - len - (arg->flags[4] &&
+			*str != '0' && (arg->type == 'o' || arg->type == 'O') ? 1 : 0));
 	}
-	printf_concat(arg, str, len);
+	if (!(*str == '0' && arg->preci == 0 &&
+			!(arg->type == 'o' || arg->type == 'O')))
+		printf_concat(arg, str, len);
+}
+
+void	save_to_buf_minus_bin(t_arg *arg, char *str, int len)
+{
+	if (arg->preci == -1)
+	{
+		arg->flags[4] ? depend_on_type(arg, str) : arg->flags[4];
+		printf_concat(arg, str, len);
+		if (arg->flags[2])
+			add_char(arg, '0', arg->width - len);
+		else if (!arg->flags[2] && arg->flags[4])
+			add_some_chars(arg, str, len);
+		else
+			add_char(arg, ' ', arg->width - len);
+	}
+	else
+	{
+		arg->flags[4] ? depend_on_type(arg, str) : arg->flags[4];
+		add_char(arg, '0', arg->preci - len - (arg->flags[4] &&
+			*str != '0' && (arg->type == 'o' || arg->type == 'O') ? 1 : 0));
+		if (!(*str == '0' && arg->preci == 0 &&
+				!(arg->type == 'o' || arg->type == 'O')))
+			printf_concat(arg, str, len);
+		setting_spaces(arg, str, len);
+	}
 }
 
 void	set_systems_bin(t_arg *arg, va_list va, char **ptr)
 {
 	char	*needed;
-	int		len;
 
 	arg->type = *arg->format++;
 	if (*(arg->format - 1) == 'O' || *(arg->format - 1) == 'B')
@@ -72,19 +104,18 @@ void	set_systems_bin(t_arg *arg, va_list va, char **ptr)
 		arg->length[1] = arg->length[1] ? arg->length[0] : '\0';
 	}
 	needed = get_in_ustring(arg, va, ptr);
-	len = ft_strlen(needed);
-	arg->preci = arg->preci > 0 && arg->preci <
-			len ? -1 : arg->preci;
-	if (arg->preci == 0 && *needed == '0' && ((!arg->flags[4] &&
-					(arg->type == 'o' || arg->type == 'O')) ||
-							(arg->type == 'x' || arg->type == 'X')))
-	{
-		no_preci(arg);
-		return ;
-	}
+	arg->l = ft_strlen(needed);
+	add_mem(arg);
+	arg->flags[1] = 0;
+	arg->flags[3] = 0;
+	arg->flags[2] = arg->preci >= 0 && arg->flags[2] ? 0 : arg->flags[2];
+	arg->preci = arg->preci > 0 && arg->preci < arg->l
+		? -1 : arg->preci;
+	if (arg->preci == 0 && *needed == '0' && !arg->flags[4])
+		return (no_preci(arg));
 	arg->flags[2] = arg->flags[0] || arg->preci >= 0 ? 0 : arg->flags[2];
 	if (arg->type >= 'A' && arg->type <= 'Z')
 		set_uppercase(&needed);
-	arg->flags[0] ? usave_to_buf_minus(arg, needed, len) :
-				save_to_buf_no_minus_bin(arg, needed, len);
+	arg->flags[0] ? save_to_buf_minus_bin(arg, needed, arg->l) :
+				save_to_buf_no_minus_bin(arg, needed, arg->l);
 }

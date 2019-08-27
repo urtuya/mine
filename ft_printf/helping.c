@@ -26,17 +26,17 @@ void	refresh(t_arg *arg)
 	arg->type = '\0';
 }
 
-void	depend_on_type(t_arg *arg)
+void	depend_on_type(t_arg *arg, char *str)
 {
-	if (arg->type == 'x')
+	if (arg->type == 'x' && *str != '0')
 		printf_concat(arg, "0x", 2);
-	else if (arg->type == 'X')
+	else if (arg->type == 'X' && *str != '0')
 		printf_concat(arg, "0X", 2);
-	else if (arg->type == 'o' || arg->type == 'O')
+	else if ((arg->type == 'o' || arg->type == 'O') && *str != '0')
 		printf_concat(arg, "0", 1);
-	else if (arg->type == 'b')
+	else if (arg->type == 'b' && *str != '0')
 		printf_concat(arg, "0b", 2);
-	else if (arg->type == 'B')
+	else if (arg->type == 'B' && *str != '0')
 		printf_concat(arg, "0B", 2);
 }
 
@@ -54,23 +54,12 @@ int		lower(char type)
 	return (0);
 }
 
-void	set_color(t_arg *arg)
+int		set_spaces(t_arg *arg, char *str)
 {
-	if (ft_strstr(arg->format, "red"))
-		write(1, RED, 6);
-	else if (ft_strstr(arg->format, "green"))
-		write(1, GREEN, 6);
-	else if (ft_strstr(arg->format, "blue"))
-		write(1, BLUE, 6);
-	else if (ft_strstr(arg->format, "magenta"))
-		write(1, MAGENTA, 6);
-	else if (ft_strstr(arg->format, "cyan"))
-		write(1, CYAN, 6);
-	else if (ft_strstr(arg->format, "yel"))
-		write(1, YELLOW, 6);
-	else
-		return ;
-	while (*arg->format++ != '}')
-		;
-	arg->color = 1;
+	if ((arg->type == 'b' || arg->type == 'B' ||
+			arg->type == 'x' || arg->type == 'X') && *str != '0')
+		return (2);
+	else if ((arg->type == 'o' || arg->type == 'O') && *str != '0')
+		return (1);
+	return (0);
 }

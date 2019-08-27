@@ -32,6 +32,8 @@ static int	count_len(uintmax_t val, int base)
 	int	count;
 
 	count = 0;
+	if (val == 0)
+		return (1);
 	while (val)
 	{
 		count++;
@@ -47,7 +49,7 @@ char		*ft_uintmaxtoa(uintmax_t val, int base)
 	char	*tmp;
 
 	len = count_len(val, base);
-	str = ft_strnew(len + 1);
+	str = ft_strnew(len);
 	tmp = str;
 	save_ustr_recu(&tmp, val, base);
 	return (str);

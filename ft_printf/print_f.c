@@ -12,13 +12,14 @@
 
 #include "ft_printf.h"
 
-static int	check_nan_inf(double val)
+static int	check_nan_inf(double val, int *sign)
 {
 	unsigned long	l;
 	int				expo;
 	unsigned int	mantis;
 
 	l = *(unsigned long*)(&val);
+	*sign = l >> 63 & 1;
 	if (val != val)
 		return (!(l >> 63 & 1) ? 1 : 2);
 	mantis = ((l << 12) >> 12);
@@ -31,27 +32,41 @@ void		set_f(t_arg *arg, va_list va, char **ptr)
 {
 	char			*needed;
 	long double		val;
-	int				len;
 	int				f;
 	int				flag;
 
 	arg->type = *arg->format++;
 	val = (arg->length[0] == 'L') ?
 			va_arg(va, long double) : va_arg(va, double);
-	if ((flag = check_nan_inf(val)))
+	if ((flag = check_nan_inf(val, &f)))
 	{
 		if (flag == 1 || flag == 2)
-			needed = flag == 1 ? ft_strdup("nan") : ft_strdup("-nan");
+			needed = flag == 1 ? ft_strdup("nan") : ft_strdup("nan");
 		if (flag == 3 || flag == 4)
 			needed = flag == 3 ? ft_strdup("inf") : ft_strdup("-inf");
 	}
-	else if (!(needed = ft_ftoa(val, arg->preci)))
+	else if (!(needed = ft_ftoa(val, arg->preci, f)))
 		return ;
-	len = ft_strlen(needed);
+	arg->l = ft_strlen(needed);
+	add_mem(arg);
 	*ptr = needed;
-	f = *needed == '-' ? 1 : 0;
-	arg->preci = arg->preci <= len ? -1 : arg->preci;
+	arg->flags[4] && arg->preci == 0 ? dotset(needed, &arg->l) : arg->flags[4];
+	arg->preci = arg->preci <= arg->l ? -1 : arg->preci;
 	arg->flags[2] = arg->flags[0] ? 0 : arg->flags[2];
-	arg->flags[0] ? save_to_buf_minus(arg, needed, len, f) :
-			save_to_buf_no_minus(arg, needed, len, f);
+	arg->flags[0] ? save_to_buf_minus(arg, needed, arg->l, f) :
+			save_to_buf_no_minus(arg, needed, arg->l, f);
+}
+
+void		dotset(char *needed, int *len)
+{
+	char *tmp;
+	char *dot;
+
+	(*len)++;
+	tmp = ft_strdup(needed);
+	dot = ft_strdup(".");
+	ft_strdel(&needed);
+	needed = ft_strjoin(tmp, dot);
+	ft_strdel(&tmp);
+	ft_strdel(&dot);
 }
